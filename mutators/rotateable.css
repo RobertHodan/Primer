@@ -1,0 +1,22 @@
+.resize-hitbox {
+  position: absolute;
+  user-select: none;
+  border-radius: 33%;
+  background: blue;
+}
+
+.resize-hitbox.right {
+
+}
+
+.resize-hitbox.left {
+
+}
+
+.resize-hitbox.top {
+
+}
+
+.resize-hitbox.bottom {
+
+}
