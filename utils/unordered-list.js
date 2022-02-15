@@ -2,22 +2,25 @@ import { stringToElement } from './utils.js';
 
 export const UnorderedListDefaults = {
   className: '',
+  createItem: () => {},
+  listItems: [],
 }
 
-export function UnorderedList(itemData, itemFunc, options = UnorderedListDefaults) {
+export function UnorderedList(options = UnorderedListDefaults) {
   options = {...UnorderedListDefaults, ...options};
+  const { className, createItem, listItems } = options;
 
   const element = stringToElement(`
     <ul>
     </ul>
   `);
 
-  if (options.className.length > 0) {
-    element.className = options.className;
+  if (className.length > 0) {
+    element.className = className;
   }
 
-  for (const data of itemData) {
-    const item = itemFunc(data);
+  for (const data of listItems) {
+    const item = createItem(data);
 
     element.append(item);
   }

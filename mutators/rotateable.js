@@ -1,34 +1,33 @@
-import { AddEventListener, AngleTo } from '../utils/utils.js';
+import { addEventListener, angleTo, cleanup, create1MBString, getProperty, getTransformValues, setTransformValues } from '../utils/utils.js';
 
 export const RotateableOptions = {
-  hitboxRadius: 1.5,
-  hitboxOffset: 2,
+  debug: false,
 };
 
 export function Rotateable(element, options) {
   options = {...RotateableOptions, ...options};
 
-  const state = {
-    angle: 0,
-    prevAngle: -1,
-    debug: options.debug || true,
-  };
+  const angleArr = getTransformValues(element, 'rotate') || [];
+  let angle = Number.parseFloat(angleArr[0]) || 0;
+  let prevAngle = -1;
 
   const dirs = ['topRight', 'bottomRight', 'bottomLeft', 'topLeft'];
+  const hitboxes = [];
   for(const dir of dirs) {
-    const hitbox = createHitbox(element, state, options, dir);
+    const hitbox = createHitbox(options, dir);
+    hitboxes.push(hitbox);
     let isHitboxActive = false;
 
-    const removeMousedown = AddEventListener(hitbox, 'mousedown', () => {
+    addEventListener(hitbox, 'mousedown', () => {
       isHitboxActive = true;
-    });
+    }, hitbox);
 
-    const removeMouseup = AddEventListener(document, 'mouseup', () => {
+    addEventListener(document, 'mouseup', () => {
       isHitboxActive = false;
-      state.prevAngle = -1;
-    });
+      prevAngle = -1;
+    }, hitbox);
 
-    const removeMousemove = AddEventListener(document, 'mousemove', (mouseEvent) => {
+    addEventListener(document, 'mousemove', (mouseEvent) => {
       if (isHitboxActive) {
         const bounds = element.getBoundingClientRect();
         const mouseVector = {
@@ -39,68 +38,55 @@ export function Rotateable(element, options) {
           x: bounds.left + bounds.width / 2,
           y: bounds.top + bounds.height / 2,
         };
-        const degrees = AngleTo(elementVector, mouseVector, true);
+        const degrees = angleTo(elementVector, mouseVector, true);
 
-        let angleDiff = degrees - state.prevAngle;
-        if (state.prevAngle < 0) {
+        let angleDiff = degrees - prevAngle;
+        if (prevAngle < 0) {
           angleDiff = 0;
         }
 
-        state.angle += angleDiff;
-        state.prevAngle = degrees;
+        angle += angleDiff;
+        prevAngle = degrees;
 
-        if (state.angle > 360) {
-          state.angle -= 360;
-        } else if (state.angle < 0) {
-          state.angle += 360;
+        if (angle > 360) {
+          angle -= 360;
+        } else if (angle < 0) {
+          angle += 360;
         }
 
-        element.style.setProperty('transform', `rotate(${state.angle}deg)`);
+        setTransformValues(element, 'rotate', [`${angle}deg`]);
       }
-    });
+    }, hitbox);
 
     element.append(hitbox);
   }
 
   return () => {
-      removeMousedown();
-      removeMouseup();
-      removeMousemove();
+    for (const hitbox of hitboxes) {
+      cleanup(hitbox);
+
+      element.removeChild(hitbox);
     }
+  }
 }
 
-
-function createHitbox(element, state, options, direction) {
+function createHitbox(options, direction) {
   const hitbox = document.createElement('div');
+  hitbox.classList.add('rotateable-hitbox');
 
   const style = hitbox.style;
-  style.setProperty('background', 'green');
-  style.setProperty('position', 'absolute');
-  style.setProperty('border-radius', '50%');
-  style.setProperty('user-select', 'none');
-  style.setProperty('width', `${options.hitboxRadius}em`);
-  style.setProperty('height', `${options.hitboxRadius}em`);
+  if (options.debug) {
+    style.setProperty('background', 'green');
+  }
 
   if (direction == 'topRight') {
-    style.setProperty('top', '0px');
-    style.setProperty('right', '0px');
-    style.setProperty('margin-top', `-${options.hitboxOffset}em`);
-    style.setProperty('margin-right', `-${options.hitboxOffset}em`);
+    hitbox.classList.add('top-right');
   } else if (direction == 'bottomRight') {
-    style.setProperty('bottom', '0px');
-    style.setProperty('right', '0px');
-    style.setProperty('margin-bottom', `-${options.hitboxOffset}em`);
-    style.setProperty('margin-right', `-${options.hitboxOffset}em`);
+    hitbox.classList.add('bottom-right');
   } else if (direction == 'bottomLeft') {
-    style.setProperty('bottom', '0px');
-    style.setProperty('left', '0px');
-    style.setProperty('margin-bottom', `-${options.hitboxOffset}em`);
-    style.setProperty('margin-left', `-${options.hitboxOffset}em`);
+    hitbox.classList.add('bottom-left');
   } else if (direction == 'topLeft') {
-    style.setProperty('top', '0px');
-    style.setProperty('left', '0px');
-    style.setProperty('margin-top', `-${options.hitboxOffset}em`);
-    style.setProperty('margin-left', `-${options.hitboxOffset}em`);
+    hitbox.classList.add('top-left');
   }
 
   return hitbox;

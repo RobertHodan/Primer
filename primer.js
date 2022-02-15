@@ -1,7 +1,7 @@
 import { addEventListener } from './utils/utils.js';
 
 export const PrimerDefaults = {
-  overideDefaultClassName: false,
+  overideClassName: false,
 }
 
 export class Primer {
@@ -12,10 +12,12 @@ export class Primer {
   }
 
   applyOptions() {
-    if (this.options.overideDefaultClassName) {
+    if (this.options.overideClassName) {
       this.element.className = '';
-    } else {
-      this.element.className = 'primer ' + this.element.className;
+    }
+
+    if (this.options.className) {
+      this.element.className = this.options.className;
     }
   }
 
@@ -30,6 +32,14 @@ export class Primer {
   removeEvents() {
     for (const remove of this.removers) {
       remove();
+    }
+  }
+
+  delete() {
+    this.removeEvents();
+
+    if (this.element) {
+      this.element.remove();
     }
   }
 }

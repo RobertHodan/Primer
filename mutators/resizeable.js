@@ -1,116 +1,111 @@
-import { stringToElement } from '../utils/utils.js';
+import { stringToElement } from '../utils/string.js';
+import { addEventListener, addMouseListener, getHeight, getWidth } from '../utils/utils.js';
 
 export const ResizeableOptions = {
   top: true,
   right: true,
   bottom: true,
   left: true,
+  lockAspectRatio: true,
+  debug: true,
 };
 
 export function Resizeable(element, options) {
   options = {...ResizeableOptions, ...options};
 
-  let isDraggable = false;
-
   let hitboxes = [];
+  let cleaners = [];
+  if (options.top) {
+    hitboxes.push(stringToElement(`<div class="resize-hitbox top"></div>`));
+  }
+  if (options.right) {
+    hitboxes.push(stringToElement(`<div class="resize-hitbox right"></div>`));
+  }
+  if (options.bottom) {
+    hitboxes.push(stringToElement(`<div class="resize-hitbox bottom"></div>`));
+  }
+  if (options.left) {
+    hitboxes.push(stringToElement(`<div class="resize-hitbox left"></div>`));
+  }
+  if (options.top && options.left) {
+    hitboxes.push(stringToElement(`<div class="resize-hitbox top-left"></div>`));
+  }
+  if (options.top && options.right) {
+    hitboxes.push(stringToElement(`<div class="resize-hitbox top-right"></div>`));
+  }
+  if (options.bottom && options.right) {
+    hitboxes.push(stringToElement(`<div class="resize-hitbox bottom-right"></div>`));
+  }
+  if (options.bottom && options.left) {
+    hitboxes.push(stringToElement(`<div class="resize-hitbox bottom-left"></div>`));
+  }
 
-  hitboxes.push(stringToElement(`<div class="resize-hitbox top"></div>`));
-  hitboxes.push(stringToElement(`<div class="resize-hitbox right"></div>`));
-  hitboxes.push(stringToElement(`<div class="resize-hitbox bottom"></div>`));
-  hitboxes.push(stringToElement(`<div class="resize-hitbox left"></div>`));
-
-  let activeEdges = [false, false, false, false];
-
-  for (let i = 0; i < hitboxes.length; i += 1) {
-    const hitbox = hitboxes[i];
-
-    if (!hasEdge(options, i)) {
-      continue;
+  for (const hitbox of hitboxes) {
+    if (options.debug) {
+      hitbox.style.setProperty('background', 'blue');
     }
 
-    hitbox.addEventListener('mousedown', () => {
-      isDraggable = true;
-      activeEdges[i] = true;
+    addEventListener(hitbox, 'mousedown', () => {
+
+    });
+    addMouseListener(hitbox, {
+      button: 'left',
+      actionType: 'hold',
+    }, (event) => {
+      const className = hitbox.className;
+
+      // TODO: Make compatible with Rotateable
+
+      let horizontal = false;
+      if (className.includes('left') || className.includes('right')) {
+        horizontal = true;
+      }
+
+      let vertical = false;
+      if (className.includes('top') || className.includes('bottom')) {
+        vertical = true;
+      }
+
+      let width = getWidth(element);
+      let height = getHeight(element);
+      if (horizontal) {
+        let delta = event.movementX;
+        if (className.includes('left')) {
+          let posX = Number.parseFloat(element.style.getPropertyValue('left')) || 0;
+          posX += event.movementX;
+          element.style.setProperty('left', `${posX}px`);
+          delta = -event.movementX;
+        }
+
+        width += delta;
+        element.style.setProperty('width', `${width}px`);
+      }
+
+      if (vertical) {
+        if (className.includes('top')) {
+          let posY = Number.parseFloat(element.style.getPropertyValue('top')) || 0;
+          posY += event.movementY;
+          element.style.setProperty('top', `${posY}px`);
+          height -= event.movementY;
+        } else {
+          height += event.movementY;
+        }
+        element.style.setProperty('height', `${height}px`);
+      }
     });
 
     element.append(hitbox);
   }
 
-  document.addEventListener('mouseup', () => {
-    isDraggable = false;
-    activeEdges[0] = false;
-    activeEdges[1] = false;
-    activeEdges[2] = false;
-    activeEdges[3] = false;
-  });
-
-  document.addEventListener('mousemove', (mouseEvent) => {
-    if (isDraggable) {
-      let bounding = element.getBoundingClientRect();
-
-      if (activeEdges[0]) {
-        const inverse = calcPos(bounding.y, mouseEvent.pageY, bounding.height);
-        const height = bounding.height - inverse;
-
-        if (!(height <= bounding.height && bounding.height <= 10)) {
-          element.style.setProperty('height', `${height}px`);
-          element.style.setProperty('top', `${bounding.top + inverse}px`);
-        }
-      }
-
-      if (activeEdges[1]) {
-        const width = calcPos(bounding.x, mouseEvent.pageX, bounding.width);
-
-        element.style.setProperty('width', `${width}px`);
-      }
-
-      if (activeEdges[2]) {
-        const height = calcPos(bounding.y, mouseEvent.pageY, bounding.height);
-
-        element.style.setProperty('height', `${height}px`);
-      }
-
-      if (activeEdges[3]) {
-        const inverse = calcPos(bounding.x, mouseEvent.pageX, bounding.width);
-        const width = bounding.width - inverse;
-
-        if (!(width <= bounding.width && bounding.width <= 10)) {
-          element.style.setProperty('width', `${width}px`);
-          element.style.setProperty('left', `${bounding.left + inverse}px`);
-        }
-      }
-
-      bounding = element.getBoundingClientRect();
-
-      if (bounding.height < 10) {
-        element.style.setProperty('height', `${10}px`);
-      }
-
-      if (bounding.width < 10) {
-        element.style.setProperty('width', `${10}px`);
-      }
+  return () => {
+    for (const cleaner of cleaners) {
+      cleaner();
     }
-  });
-}
 
-function hasEdge(options, index) {
-  if (index === 0 && options.top) {
-    return true;
+    for (const hitbox of hitboxes) {
+      element.remove(hitbox);
+    }
   }
-
-  if (index === 1 && options.right) {
-    return true;
-  }
-
-  if (index === 2 && options.bottom) {
-    return true;
-  }
-
-  if (index === 3 && options.left) {
-    return true;
-  }
-
-  return false;
 }
 
 function calcPos(elementPos, mousePos, elementSize) {

@@ -1,8 +1,9 @@
-import { addMouseListener } from "../utils/utils.js";
+import { addMouseListener, offsetElementBy } from "../utils/utils.js";
 
 export const DraggableDefaults = {
   mouseButton: 'left',
   appendListenerTo: undefined,
+  forceAbsolute: false,
 };
 
 export function Draggable(element, options = DraggableDefaults, callback = ()=>{}) {
@@ -11,12 +12,12 @@ export function Draggable(element, options = DraggableDefaults, callback = ()=>{
     options = DraggableDefaults;
   }
 
-  return _draggable(element, options, callback);
-}
-
-function _draggable(element, options = DraggableDefaults, callback = ()=>{}) {
   options = {...DraggableDefaults, ...options};
   const { appendListenerTo } = options;
+
+  if (options.forceAbsolute) {
+    element.style.setProperty('position', "absolute");
+  }
 
   const listenerElement = appendListenerTo || element;
   const removeListener = addMouseListener(listenerElement, {
@@ -32,9 +33,8 @@ function _draggable(element, options = DraggableDefaults, callback = ()=>{}) {
 
     callback(mouseEvent);
 
-    element.style.setProperty('left', `${element.offsetLeft + mouseEvent.movementX}px`);
-    element.style.setProperty('top', `${element.offsetTop + mouseEvent.movementY}px`);
-  });
+    offsetElementBy(element, mouseEvent.movementX, mouseEvent.movementY);
+  }, element);
 
   return removeListener;
 }

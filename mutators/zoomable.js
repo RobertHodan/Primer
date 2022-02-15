@@ -12,10 +12,6 @@ export function Zoomable(element, options = ZoomableDefaults, callback = ()=>{})
     options = ZoomableDefaults;
   }
 
-  return _zoomable(element, options, callback);
-}
-
-function _zoomable(element, options = ZoomableDefaults, callback = ()=>{}) {
   options = {...ZoomableDefaults, ...options};
   const { appendListenerTo } = options;
 

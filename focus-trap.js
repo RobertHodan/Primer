@@ -31,20 +31,21 @@ export function focusTrap(element, options = FocusTrapDefaults) {
 
   addEventListener(element, 'focusin', (event) => {
     state.lastFocused = event.target;
-  }, removers);
+  });
   addEventListener(trapStart, 'focusin', () => {
     resetFocus(element, state);
-  }, removers);
+  }, element);
   addEventListener(trapEnd, 'focusin', () => {
     resetFocus(element, state);
-  }, removers);
+  }, element);
   addEventListener(window, 'focus', () => {
     resetFocus(element, state);
-  }, removers);
+  }, element);
 
   // Freeze scroll position
   let unfreeze = freezeScroll();
 
+  // TODO: Update to work with "cleanup" utility function
   const removeEventListeners = () => {
     for (const remover of removers) {
       remover();
