@@ -3,8 +3,8 @@ import { Primer, PrimerDefaults } from './primer.js';
 import { ArrowIcon } from '../icons/icons.js';
 import { UnorderedList } from './utils/unordered-list.js';
 import { focusTrap } from './focus-trap.js';
-import { Draggable } from './mutators/draggable.js';
-import { Zoomable } from './mutators/zoomable.js';
+import { Draggable } from './element-mutators/draggable.js';
+import { Zoomable } from './element-mutators/zoomable.js';
 
 linkCSS('/primer/image-viewer.css');
 

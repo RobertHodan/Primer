@@ -130,13 +130,93 @@ export function linkCSS(cssLink, options = linkCSSDefaults) {
   }
 }
 
-export function clamp(value, min=0, max=1) {
-  if (value > max) {
+// https://github.com/you-dont-need/You-Dont-Need-Lodash-Underscore#_debounce
+export function debounce(func, wait, immediate) {
+  var timeout;
+  return function() {
+  	var context = this, args = arguments;
+  	clearTimeout(timeout);
+  	timeout = setTimeout(function() {
+  		timeout = null;
+  		if (!immediate) func.apply(context, args);
+  	}, wait);
+  	if (immediate && !timeout) func.apply(context, args);
+  };
+}
+
+// https://github.com/you-dont-need/You-Dont-Need-Lodash-Underscore#_throttle
+export function throttle(func, timeFrame) {
+  var lastTime = 0;
+  return function (...args) {
+      var now = new Date();
+      if (now - lastTime >= timeFrame) {
+          func(...args);
+          lastTime = now;
+      }
+  };
+}
+
+export function clamp(value, min, max) {
+  // If neither are provided, assume a "0 and 1" clamp
+  if (min == undefined && max == undefined) {
+    min = 0;
+    max = 1;
+  }
+
+  if (max != undefined && value > max) {
     value = max;
   }
 
-  if (value < min) {
+  if (min != undefined && value < min) {
     value = min;
+  }
+
+  return value;
+}
+
+export function setInterval(callback, options) {
+  if (Number.isFinite(options)) {
+    options = {
+      interval: options,
+    };
+  } else {
+    if (!options.isCopy) {
+      options = {...options};
+      options.isCopy = true;
+    }
+  }
+
+  const func = () => {
+    callback();
+
+    if (options.step) {
+      options.interval += options.step;
+    }
+
+    if (options.multiply) {
+      options.interval *= options.multiply;
+    }
+
+    if (options.max || options.min) {
+      options.interval = clamp(options.interval, options.min, options.max);
+    }
+
+    setInterval(callback, options);
+  }
+  options.timeout = setTimeout(func, options.interval);
+
+  return () => {
+    clearTimeout(options.timeout);
+  }
+};
+
+export function wrapAround(value, min=0, max=1) {
+  if (value > max) {
+    value = value % (max + 1);
+  }
+
+  if (value < min) {
+    value = max + (value + 1) % (max + 1);
   }
 
   return value;
@@ -254,6 +334,100 @@ export function create1MBString() {
   return new Array(1000000).join('*');
 }
 
+const boundsDefault = {min: undefined, max: undefined};
+
+// Returns bounds of a set of children or descendants
+export function getDescendantBounds(
+  container,
+  getDescendant = (item) => {return item},
+) {
+  let xBounds = {...boundsDefault};
+  let yBounds = {...boundsDefault};
+  const descendants = [];
+
+  // Determine bounds
+  for(const item of container.children) {
+    const child = getDescendant(item);
+
+    if (!child) {
+      continue;
+    }
+
+    let rect = child.getBoundingClientRect();
+    updateBounds(rect.x, rect.width, xBounds);
+    updateBounds(rect.y, rect.height, yBounds);
+
+    descendants.push({
+      element: child,
+      rect: rect,
+    });
+  }
+
+  return {
+    x: xBounds,
+    y: yBounds,
+    elementsData: descendants,
+  }
+}
+
+export function getChildRelativeData(container, options = {
+  createChildrenData: noop,
+}) {
+  return getDescendantRelativeData(container, undefined, options);
+}
+
+// Returns position of a set of children or descendants, such that the most top-left element represents [0, 0]
+export function getDescendantRelativeData(
+  container,
+  getDescendant = (item) => {return item},
+  options,
+) {
+  const bounds = getDescendantBounds(container, getDescendant);
+
+  const childrenData = [];
+  for (const data of bounds.elementsData) {
+    const {element, rect} = data;
+    let rotation = getTransformValues(element, 'rotate')[0];
+    rotation = Number.parseFloat(rotation) || 0;
+    const zIndex = Number.parseInt(getProperty(element, 'z-index')) || 0;
+
+    const elData = {
+      position: {
+        x: rect.x - bounds.x.min,
+        y: rect.y - bounds.y.min,
+      },
+      rotation,
+      zIndex,
+    };
+    if (options.createChildrenData === noop) {
+      childrenData.push({
+        element: element,
+        ...elData,
+      });
+    } else {
+      childrenData.push(options.createChildrenData(element, elData));
+    }
+  }
+
+  return {
+    width: bounds.x.max - bounds.x.min,
+    height: bounds.y.max - bounds.y.min,
+    childrenData,
+  }
+}
+
+function updateBounds(value, size, bounds = {min, max}) {
+  const {min, max} = bounds;
+
+  if (!min || value < min) {
+    bounds.min = value;
+  }
+
+  if (!max || value + size > max) {
+    bounds.max = value + size;
+  }
+}
+
 export function offsetElementBy(element, offsetX, offsetY) {
   let x = 0;
   let y = 0;
@@ -271,7 +445,7 @@ export function offsetElementBy(element, offsetX, offsetY) {
   moveElementTo(element, x + offsetX, y + offsetY);
 }
 
-export function moveElementTo(element, posX, posY) {
+export function moveElementTo(element, posX = 0, posY = 0) {
   element.style.setProperty('left', `${posX}px`);
   element.style.setProperty('top', `${posY}px`);
 }
@@ -322,7 +496,7 @@ export function setTransformValues(element, transformKey, values, asAttribute = 
 
 export function getTransformValues(element, transformKey) {
   const transform = element.style.transform;
-  let values = undefined;
+  let values = [];
   if (transform.includes(transformKey)) {
     values = transform.split(`${transformKey}(`)[1].split(')')[0].replaceAll(' ', '').split(',');
   }

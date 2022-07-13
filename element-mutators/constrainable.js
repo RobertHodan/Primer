@@ -11,10 +11,6 @@ export function Constrainable(element, options = ConstrainableDefaults, callback
     options = ConstrainableDefaults;
   }
 
-  return _constrainable(element, options, callback);
-}
-
-function _constrainable(element, options = ConstrainableDefaults, callback = ()=>{}) {
   options = {...ConstrainableDefaults, ...options};
   const { appendListenerTo } = options;
 

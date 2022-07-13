@@ -27,3 +27,31 @@ export function prettifyLabel(str) {
 
   return newStr;
 }
+
+export function isFirstLetter(index, str) {
+  if (index === 0) {
+    return true;
+  }
+
+  const prevChar = str[index-1];
+  if (prevChar === '-' || prevChar === ' ' || prevChar === '_') {
+    return true;
+  }
+
+  return false;
+}
+
+export function toPascalCase(str) {
+  let pascal = '';
+
+  for (let i = 0; i < str.length; i++) {
+    const char = str[i];
+    if (isFirstLetter(i, str)) {
+      pascal += char.toUpperCase();
+    } else {
+      pascal += char;
+    }
+  }
+
+  return pascal;
+}

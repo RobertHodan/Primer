@@ -3,6 +3,34 @@ import { stringToElement } from './string.js';
 
 const getSVGNoop = (element) => { return element };
 
+const parser = new DOMParser();
+
+export function getCircle(options = {
+  width: 100,
+  height: 100,
+}) {
+  const circleStr = `
+  <svg width="${options.width}" height="${options.height}" viewBox="0 0 ${options.width} ${options.height}" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="${options.width}" cy="${options.height}" r="${options.height}"/>
+  </svg>
+  `;
+
+  return parser.parseFromString(circleStr, 'image/svg+xml').documentElement;
+}
+
+export function getRect(options = {
+  width: 100,
+  height: 100,
+}) {
+  const rectStr = `
+  <svg width="${options.width}" height="${options.height}" viewBox="0 0 ${options.width} ${options.height}" xmlns="http://www.w3.org/2000/svg">
+    <rect width="${options.width}" height="${options.height}"/>
+  </svg>
+  `;
+
+  return parser.parseFromString(rectStr, 'image/svg+xml').documentElement;
+}
+
 export function combineSVGs(container, options = {
   getSVG: getSVGNoop,
 }) {
@@ -36,8 +64,8 @@ export function combineSVGs(container, options = {
     if (svg.tagName === 'svg') {
       let rect = svg.getBoundingClientRect();
       let box = svg.getBBox();
-      updateBounds(rect.x + box.x, box.width, xBounds);
-      updateBounds(rect.y + box.y, box.height, yBounds);
+      updateBounds(rect.x, box.width, xBounds);
+      updateBounds(rect.y, box.height, yBounds);
 
       svgs.push({
         svg,
