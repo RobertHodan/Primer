@@ -1,4 +1,5 @@
 import { actionable } from '../component-mutators/actionable.js';
+import { noop } from '../utils/utils.js';
 import { Component } from './component.js';
 
 /**
@@ -8,7 +9,8 @@ import { Component } from './component.js';
  */
 
 const defaults = {
-  action: () => {},
+  action: noop,
+  onClick: noop,
   keyboardFocusable: true,
 }
 
@@ -23,7 +25,11 @@ export class Button extends Component {
     settings.tagName = settings.keyboardFocusable ? 'button' : 'div';
     super(settings);
 
-    actionable(this);
+    const {onClick} = settings;
+
+    actionable(this, {
+      onClick,
+    });
     this._onAction = settings.action;
   }
 

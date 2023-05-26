@@ -1,4 +1,5 @@
-import { addEventListener, stringToElement, freezeScroll } from './utils/utils.js';
+import { stringToElement } from './utils/string.js';
+import { addEventListener, freezeScroll } from './utils/utils.js';
 
 export const FocusTrapDefaults = {
   disabled: true,

@@ -450,6 +450,11 @@ export function moveElementTo(element, posX = 0, posY = 0) {
   element.style.setProperty('top', `${posY}px`);
 }
 
+export function centerElementTo(element, posX = 0, posY = 0) {
+  element.style.setProperty('left', `${posX - element.clientWidth / 2}px`);
+  element.style.setProperty('top', `${posY - element.clientHeight / 2}px`);
+}
+
 export function translateBy(element, x, y) {
   let vals = getTransformValues(element, 'translate') || [0, 0];
 

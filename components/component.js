@@ -1,14 +1,13 @@
 /**
  * @typedef {Object} ComponentParams
  * @property {string | HTMLElement} content
- * @property {string?} elementType
+ * @property {string?} tagName
  * @property {string?} className
  */
 
 import { clearElement, noop } from '../utils/utils.js';
 
 const defaults = {
-  elementType: 'span',
   tagName: 'div',
 }
 
@@ -26,11 +25,11 @@ export class Component {
       settings.addMutators.call(this);
     }
 
-    if (settings.content && settings.content.getElement) {
+    if (settings.content != undefined && settings.content.getElement) {
       settings.content = settings.content.getElement();
     }
 
-    if (settings.content) {
+    if (settings.content != undefined) {
       this.setContent(settings.content);
     }
 
@@ -51,7 +50,7 @@ export class Component {
   }
 
   append(child) {
-    if (!child) {
+    if (child == undefined) {
       return;
     }
 

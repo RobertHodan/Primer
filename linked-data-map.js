@@ -121,6 +121,14 @@ export class LinkedDataMap {
   setData(dataIds, values, idOfOrigin) {
     let hasNewData = false;
 
+    if (!Array.isArray(dataIds)) {
+      dataIds = [dataIds];
+    }
+
+    if (!Array.isArray(values)) {
+      values = [values];
+    }
+
     const mutatorIds = this._getMutatorIds(dataIds);
     if (mutatorIds.length) {
       hasNewData = this._setData(dataIds, values);

@@ -1,11 +1,13 @@
 import { applyRequisites, getComponent, isComponent } from '../component-mutators/utils.js';
+import { noop } from '../utils/utils.js';
 
 /**
  * @typedef {Object} Actionable
  * @property {Function} action
  */
 const defaults = {
-  action: () => {},
+  action: noop,
+  onClick: noop,
   enableDefaultEvents: true,
 }
 
@@ -26,9 +28,15 @@ export function actionable(component, settings) {
   applyRequisites(component, defaults, settings);
 
   if (settings.enableDefaultEvents) {
-    component.el.addEventListener('click', () => {
+    let onClick = () => {
       component.action();
-    });
+    };
+
+    if (settings.onClick != noop) {
+      onClick = settings.onClick;
+    }
+
+    component.el.addEventListener('click', onClick);
   }
 }
 
